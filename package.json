@@ -1,0 +1,14 @@
+{
+  "name": "d3-prototypes",
+  "version": "0.0.1",
+  "description": "A sample Node.js app using Express 4",
+  "main": "app.js",
+  "dependencies": {
+    "ejs": "^2.6.1",
+    "express": "^4.13.3"
+  },
+  "engines": {
+    "node": "9.7.1"
+  },
+  "license": "MIT"
+}

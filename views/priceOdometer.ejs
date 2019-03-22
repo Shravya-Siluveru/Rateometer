@@ -1,0 +1,169 @@
+<html>
+
+<head>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <style>
+        .column {
+            float: left;
+            width: 50%;
+        }
+
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 60%;
+            border: 1px dotted silver;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="row">
+        <div class="column">
+            <h1>Price Odometer</h1>
+            <div class="chart-container"></div>
+        </div>
+    </div>
+    <script>
+
+        function buildPriceOdometer(minValue, maxValue, currentValue) {
+            
+            var steps = 10, minPercent = 0, maxPercent = 100, 
+                currentPercent = (currentValue-minValue)/(maxValue-minValue);
+            var tau = 2 * Math.PI, startAngle = 3.1,
+                value = currentPercent;
+                width = 100,
+                height = 100,
+                outerRadius = 30,
+                innerRadius = (outerRadius / 5) * 3,
+                fontSize = innerRadius / 6;
+
+            var arc = d3.arc()
+                .innerRadius(innerRadius)
+                .outerRadius(outerRadius)
+                .startAngle(startAngle);
+
+                var svg = d3.select('.chart-container').append("svg")
+                    .attr("width", '100%')
+                    .attr("height", '100%')
+                    .attr('viewBox', 
+                           '0 0 ' + Math.min(width, height) + ' ' + Math.min(width, height))
+                    .attr('preserveAspectRatio', 'xMinYMin')
+                    .append("g")
+                    .attr("transform",
+                           "translate(" + Math.min(width, height) + "," + Math.min(width, height) / 2 + ")");
+        
+                svg.append("circle")
+                    .attr("r", outerRadius + 20)
+                    .attr("fill", "#ccf2ff"); // outer circle
+
+                svg.append("circle")
+                    .attr("r", innerRadius)
+                    .attr("fill", "black") // middle black
+                    .attr("stroke-width", 3)
+                    .attr("stroke", "#00b8e6"); // stroke for middle black
+
+                // Define the gradient
+                var gradient = svg.append("defs")
+                    .append("linearGradient")
+                    .attr("id", "gradient")
+                    .attr("x1", "0%")
+                    .attr("y1", "0%")
+                    .attr("x2", "100%")
+                    .attr("y2", "100%");
+
+                // Define the gradient colors
+                gradient.append("stop")
+                    .attr("offset", "0%")
+                    .attr("stop-color", "#00141a")
+                    .attr("stop-opacity", 1);
+
+                gradient.append("stop")
+                    .attr("offset", "90%")
+                    .attr("stop-color", "#00b8e6")
+                    .attr("stop-opacity", 1);
+
+                var titleText1 = svg.append("text")
+                    .text('CURRENT')
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#00ccff")
+                    .style("font-size", fontSize + 'px')
+                    .attr("dy", -innerRadius / 3)
+                    .attr("dx", 1);
+
+                svg.append("text").attr("fill", "#00ccff")
+                    .style("font-size", fontSize + 'px')
+                    .attr("dy", -innerRadius / 7).attr("dx", -2)
+                    .text("BID");
+
+                var valueText = svg.append("text")
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .style("font-size", (fontSize + 5) + 'px')
+                    .attr("dy", innerRadius / 3)
+                    .attr("dx", 0).text("$0");
+
+                var arcGroup = svg.append("g");
+
+                var background = arcGroup.append("path")
+                    .datum({
+                        startAngle: -tau,
+                        endAngle: -tau
+                    })
+                    .attr("class", "arc")
+                    .style("fill", "black")
+                    .attr("d", arc);
+
+                var foreground = arcGroup.append("path")
+                    .datum({
+                        endAngle: 0
+                    })
+                    .attr("class", "arc")
+                    .style("fill", "url(#gradient)")
+                    .attr("d", arc);
+
+                foreground.transition()
+                    .duration(2000)
+                    .call(arcTween, startAngle, value * tau, valueText, arc, currentValue);
+
+                var outerLabels = arcGroup.append("g");
+
+                var i;
+                for (i = 0; i < 0.9; i = i + 0.1) {
+                    outerLabels.append("text")
+                        .attr("transform", function () {
+                            var nA = 90 + (i * 360);
+                            return 'rotate(' + nA + ')';
+                        })
+                        .attr("dy", 0)
+                        .attr("dx", 40)
+                        .style("text-anchor", "middle")
+                        .style("font-size", '5px')
+                        .style("fill", "black")
+                        .text(function () {
+                            return "$" + (Math.round(i * maxValue - (10*i)) + minValue);
+                        });
+                }
+        }
+
+        function arcTween(transition, startAngle, newAngle, valueText, arc, value) {
+            transition.attrTween("d", function (d) {
+                var interpolate = d3.interpolate(d.endAngle, newAngle);
+                return function (t) {
+                    d.endAngle = interpolate(t) + startAngle;
+                    valueText.text("$" + Math.round( t * value ) );
+                    return arc(d);
+                };
+            });
+        }
+
+        buildPriceOdometer(10, 150, 40);
+    </script>
+</body>
+
+</html>
